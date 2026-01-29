@@ -8,3 +8,4 @@ from .minipeptides import *
 from .chignolin import *
 from .fastfolders import *
 from .two_peptides import *
+from .pexx import *

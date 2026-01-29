@@ -27,12 +27,18 @@ import numpy as np
 from mdtraj import version
 from mdtraj.core.topology import _topology_from_subset, Topology
 from mdtraj.utils import unitcell
-from mdtraj.utils.six import PY3
+import mdtraj
+from packaging import version as ver
+if ver.parse(mdtraj.__version__) < ver.parse('1.9.10'):
+    from mdtraj.utils.six import PY3
+    from mdtraj.utils.six import string_types
+else:
+    from six import PY3
+    from six import string_types
 if PY3:
     basestring = str
 import mdtraj.core.element as elem
 from mdtraj.utils import in_units_of, ensure_type, import_, cast_indices
-from mdtraj.utils.six import string_types
 from ..util.importing import import_openmm
 
 try:
