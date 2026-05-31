@@ -156,8 +156,24 @@ class PolyEthylene(OpenMMSystem):
     def get_rigid_block(mw, first=0, nrigid=3):
         return np.arange(first, first+nrigid)
 
+    def compute_static(self, traj):
+        """Compute and return the gyration tensor, the square radius of gyration, and the square end-to-end distance of the chains in the trajectopry.
+        
+        Parameters
+        ----------
+        traj : mdtraj.Trajectory
+        """
+        end_atoms = [[0, self._mw-1]]
+        # eelengths = md.compute_distances(traj, atom_pairs=end_atoms).flatten()
+        eevectors = md.compute_displacements(traj, atom_pairs=end_atoms, periodic=True)
+        sqee = (eevectors ** 2).sum(axis=-1).flatten()
+
+        rgtensors = md.compute_gyration_tensor(traj)
+        sqrg = md.compute_rg(traj) ** 2
+        return sqee, sqrg, rgtensors
+
     def compute_bonds(self, traj):
-        """Compute backbone bond probability.
+        """Compute and return the backbone bonds.
 
         Parameters
         ----------
@@ -167,7 +183,7 @@ class PolyEthylene(OpenMMSystem):
         return md.compute_distances(traj, atom_pairs=bonds_atoms).flatten()
 
     def compute_theta(self, traj):
-        """Compute backbone bond angles probability.
+        """Compute and return the backbone bond angles.
 
         Parameters
         ----------
@@ -177,7 +193,7 @@ class PolyEthylene(OpenMMSystem):
         return md.compute_angles(traj, angle_indices=theta_atoms).flatten()
 
     def compute_phi(self, traj):
-        """Compute backbone dihedrals probability.
+        """Compute and return backbone dihedrals.
 
         Parameters
         ----------
@@ -187,7 +203,7 @@ class PolyEthylene(OpenMMSystem):
         return md.compute_dihedrals(traj, indices=phi_atoms).flatten()
 
     def compute_phi_psi(self, traj):
-        """Compute backbone dihedrals sequential pairs joint probability.
+        """Compute and return the backbone dihedrals sequential pairs.
 
         Parameters
         ----------
@@ -216,7 +232,7 @@ class PolyEthylene(OpenMMSystem):
         integrator = LangevinMiddleIntegrator(
             450*kelvin, 1/picosecond, 0.0001*picoseconds)
         simulation = Simulation(topology, system, integrator)
-        for iframe in range(2):
+        for iframe in range(traj.n_frames):
             simulation.context.setPositions(traj.openmm_positions(iframe))
             for i, f in enumerate(system.getForces()):
                 state = simulation.context.getState(getEnergy=True, groups={i})
